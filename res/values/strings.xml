@@ -14,7 +14,7 @@
     <string name="dateEndDialogTitle">Конец периода</string>
     <string name="versionName">ver.1.0041</string>
     <string name="rowsReceived">Получено строк:</string>
-    <string name="rowsInDatabase">Строк в БД:</string>
+    <string name="rowsInDatabase">Записей в БД:</string>
     <string name="titleY">Температура, С</string>
     <string name="titleX">Время</string>
     <string name="titleGraph">Температура</string>

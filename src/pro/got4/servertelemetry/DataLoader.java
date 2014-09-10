@@ -16,13 +16,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.util.Log;
 
 /**
  * Асинхронный загрузчик данных.
  */
-public class DataLoader extends AsyncTaskLoader<Cursor> {
+
+// public class DataLoader extends AsyncTaskLoader<Cursor> {
+public class DataLoader extends CursorLoader {
 
 	public final static String BROADCAST_ACTION = "pro.got4.servertelemetry";
 

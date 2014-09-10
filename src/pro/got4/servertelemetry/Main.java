@@ -287,7 +287,7 @@ public class Main extends FragmentActivity implements
 		// процедуре onLoadFinished, запускаемой после вызова
 		// Main.loaderManager.initLoader.
 		Main.dbAdapter = new DatabaseAdapter(this);
-		Main.dbAdapter.open();
+		Main.dbAdapter.open(); // TODO: Не вызывать из UI!
 
 		// Инициализация загрузчика.
 		Main.loaderManager = getSupportLoaderManager();
@@ -633,6 +633,11 @@ public class Main extends FragmentActivity implements
 		// TODO: При смене ориентации экрана этот метод вызывается, но
 		// почему-то это не приводит к последующему вызову getItemPosition!
 		adapter.notifyDataSetChanged();
+
+		if (cursorOfReceivedData == null) {
+			cursorOfReceivedData = Main.dbAdapter
+					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " ASC");
+		}
 
 		int rowsInDatabase = 0;
 		if (cursorOfReceivedData != null) {

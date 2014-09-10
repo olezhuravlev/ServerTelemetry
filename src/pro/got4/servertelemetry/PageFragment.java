@@ -1,8 +1,8 @@
 package pro.got4.servertelemetry;
 
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +55,9 @@ Main.FragmentUpdateListener {
 		}
 		case Main.PAGE_GRAPH_INDEX: {
 
+			Log.d(Main.TAG,
+					"PageFragment.onCreateView(): Main.PAGE_GRAPH_INDEX");
+
 			// Если страница пересоздана, то значит она уже обновлена.
 			Main.updateGraph = false;
 
@@ -66,8 +69,13 @@ Main.FragmentUpdateListener {
 		}
 		case Main.PAGE_TABLE_INDEX: {
 
-			if (Main.cursorCurrentDataBackward == null
-					|| Main.cursorCurrentDataBackward.isClosed()) {
+			// TODO: Повторный запрос!
+			Main.cursorCurrentDataBackward = Main.dbAdapter
+					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " DESC");
+
+			Log.d(Main.TAG, Main.cursorCurrentDataBackward.toString());
+
+			if (Main.cursorCurrentDataBackward.getCount() == 0) {
 				fragmentView = inflater.inflate(R.layout.no_data, null);
 			} else {
 
