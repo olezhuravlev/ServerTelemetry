@@ -1,0 +1,51 @@
+<resources>
+
+    <string name="app_name">ServerTelemetry</string>
+    <string name="getData">Получить данные</string>
+    <string name="sourceServerPath">Путь к серверу телеметрии</string>
+    <string name="prefs">Настройки</string>
+    <string name="graph">График</string>
+    <string name="table">Таблица</string>
+    <string name="dateBegin">Начало периода</string>
+    <string name="dateEnd">Конец периода</string>
+    <string name="dataLoading">Загрузка данных...</string>
+    <string name="cancel">Отмена</string>
+    <string name="dateBeginDialogTitle">Начало периода</string>
+    <string name="dateEndDialogTitle">Конец периода</string>
+    <string name="versionName">ver.1.0041</string>
+    <string name="rowsReceived">Получено строк:</string>
+    <string name="rowsInDatabase">Строк в БД:</string>
+    <string name="titleY">Температура, С</string>
+    <string name="titleX">Время</string>
+    <string name="titleGraph">Температура</string>
+    <string name="graphValuesName1">Серверная</string>
+    <string name="noData">Нет данных</string>
+    <string name="chartName">Имя таблицы</string>
+    <string name="chartDescription">Описание таблицы</string>
+    <string name="dateButt">[...]</string>
+
+    <string-array name="exampleURIs">
+        <item>http://express.nsk.ru:9999/test3.php</item>
+        <item>http://www.got4.esy.es</item>
+    </string-array>
+
+    <string name="setDagePeriod">Установлен период последние двое суток</string>
+    <string name="addressDialogTitle">Выберите адрес</string>
+    <string name="PreferenceMenuTitle">Настройки</string>
+    <string name="ThemesListTitle">Темы оформления</string>
+    <string name="ThemesListSummary">Изменить внешний вид приложения</string>
+    <string name="storedRecordsMaxAmountTitle">Сохранять записей</string>
+    <string name="storedRecordsMaxAmountSummary">Максимальное количество сохраняемых записей</string>
+
+    <string-array name="ThemesNamesList">
+        <item>Светлая</item>
+        <item>Тёмная</item>
+        <item>Прозрачная</item>
+    </string-array>
+    <string-array name="ThemesIDList_Str">
+        <item>Light</item>
+        <item>Black</item>
+        <item>Translucent</item>
+    </string-array>
+
+</resources>
