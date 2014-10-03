@@ -14,6 +14,11 @@ import android.support.v4.app.DialogFragment;
 import android.widget.DatePicker;
 import android.widget.EditText;
 
+/**
+ * Диалог для ввода даты.
+ * @author programmer
+ *
+ */
 public class DatePickerFragment extends DialogFragment {
 
 	static final String VIEW_ID = "view_id";

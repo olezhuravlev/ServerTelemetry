@@ -25,6 +25,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+/**
+ * Фрагмент, представляющий страницу настроек.
+ * 
+ * @author programmer
+ * 
+ */
 public class Prefs extends Fragment implements
 		GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
 		OnClickListener, AddressDialog.AddressDialogListener {
@@ -60,7 +66,9 @@ public class Prefs extends Fragment implements
 
 	};
 
-	// Слушатель изменений в текстовых полях.
+	/**
+	 * Слушатель изменений в текстовых полях.
+	 */
 	public TextWatcher textWatcher = new TextWatcher() {
 
 		@Override
@@ -176,7 +184,8 @@ public class Prefs extends Fragment implements
 			// main - интерфейс обратного вызова, который будет вызван
 			// LoaderManager для сообщения об изменениях состояния загрузчика.
 			// Обязателен.
-			Main.loaderManager.restartLoader(Main.LOADER_ID, args, main);
+			getActivity().getSupportLoaderManager().restartLoader(
+					Main.LOADER_ID, args, main);
 
 			break;
 		}
@@ -285,15 +294,12 @@ public class Prefs extends Fragment implements
 				timerOn = false;
 
 				// Использование DialogFragment:
-				// The advantage of using a DialogFragment is that all the life
-				// cycle of the dialog will be handled for you. You will never
-				// get the error 'dialog has leaked...' again. Go to
-				// DialogFragment and forget Dialogs.
-
-				// Activity lifecycle makes it complicated - you must let
-				// Activity manage the lifecycle of the dialog box - and there
-				// is no way to pass custom parameters e.g. the custom message
-				// to Activity.showDialog if using API levels under 8.
+				// Преимущество использования DialogFragment состоит в том, что
+				// весь его жизненный цикл соответствует жизненному циклу
+				// активности и поэтому может быть легко обработан.
+				// Обычным диалогом активность управляет сама, поэтому он может
+				// быть легко потерян, например, при реконфигурировании, если он
+				// в этот момент отображался.
 				AddressDialog dialog = new AddressDialog();
 				dialog.setData(getResources().getStringArray(
 						R.array.exampleURIs));
@@ -363,32 +369,19 @@ public class Prefs extends Fragment implements
 	 */
 	public Date getDateFromEditText(EditText editText,
 			SimpleDateFormat simpleDateFormat) {
+
 		// Если в элементе, из которого был вызван диалог уже установлено
-		// значение даты, то это значение будет установлено в диалоге.
-		// В противном случае будет установлена текущая дата.
+		// значение даты, то это значение будет установлено в самом диалоге.
+		// В противном случае будет установлено значение текущей даты.
+
 		Date date = null;
 		try {
 
 			String dateString = editText.getText().toString();
 
-			// Parses a date from the specified string using the rules of this
-			// date format.
-			//
-			// Parameters
-			// string the string to parse.
-			//
-			// Returns
-			// the Date resulting from the parsing.
 			date = simpleDateFormat.parse(dateString);
 
 		} catch (ParseException e) {
-
-			// Calendar c = Calendar.getInstance();
-			// int year = c.get(Calendar.YEAR) - 1900;
-			// int monthOfYear = c.get(Calendar.MONTH);
-			// int dayOfMonth = c.get(Calendar.DAY_OF_MONTH);
-			//
-			// date = new Date(year, monthOfYear, dayOfMonth);
 
 			date = DatePickerFragment.getCurrentDate();
 		}

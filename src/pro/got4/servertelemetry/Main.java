@@ -7,9 +7,11 @@ import java.util.Date;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -40,51 +42,71 @@ public class Main extends FragmentActivity implements
 
 	public static final String TAG = "myLogs";
 
-	static final int LOADER_ID = 1;
+	/**
+	 * Идентификаторы страниц, отображаемых вьюпейджером.
+	 */
+	public static final int PAGE_PREFS_INDEX = 0;
+	public static final int PAGE_GRAPH_INDEX = 1;
+	public static final int PAGE_TABLE_INDEX = 2;
+	public static final int PREFERENCE_MENU_ITEM_ID = 0;
 
-	static final int PAGE_PREFS_INDEX = 0;
-	static final int PAGE_GRAPH_INDEX = 1;
-	static final int PAGE_TABLE_INDEX = 2;
-	static final int PREFERENCE_MENU_ITEM_ID = 0;
+	/**
+	 * Количество страниц, отображаемых вьюпейджером.
+	 */
+	public static final int PAGE_COUNT = 3;
 
-	// Строковой идентификатор текущей используемой темы.
+	/**
+	 * Идентификатор менеджера загрузок.
+	 */
+	public static final int LOADER_ID = 1;
+
+	/**
+	 * Идентификаторы таблиц и полей БД.
+	 */
+	public static final String ARGUMENT_PAGE_NUMBER_FIELDNAME = "arg_page_number";
+	public static final String SOURCE_SERVER_PATH_FIELDNAME = "source_server_path";
+	public static final String DATE_BEGIN_FIELDNAME = "date_begin";
+	public static final String DATE_END_FIELDNAME = "date_end";
+	public static final String DATE_PATTERN_FIELDNAME = "date_pattern";
+	public static final String CURRENT_THEME_ID_FIELDNAME = "currentTheme_id";
+	public static final String BUNDLE_FIELDNAME = "bundle";
+	public static final String RESTART_FLAG_FIELDNAME = "restart_flag";
+
+	/**
+	 * Строковой идентификатор текущей используемой темы оформления.
+	 */
 	String currentTheme;
-	int storedRecordsMaxAmount;
 
-	static final int PAGE_COUNT = 3;
-
-	static final String ARGUMENT_PAGE_NUMBER_FIELDNAME = "arg_page_number";
-	static final String SOURCE_SERVER_PATH_FIELDNAME = "source_server_path";
-	static final String DATE_BEGIN_FIELDNAME = "date_begin";
-	static final String DATE_END_FIELDNAME = "date_end";
-	static final String DATE_PATTERN_FIELDNAME = "date_pattern";
-	static final String CURRENT_THEME_ID_FIELDNAME = "currentTheme_id";
-	static final String BUNDLE_FIELDNAME = "bundle";
-	static final String RESTART_FLAG_FIELDNAME = "restart_flag";
-	static final String STORED_RECORDS_MAX_AMOUNT = "stored_records_max_amount";
-
+	/**
+	 * Вьюпейджер, используемый для отображения страниц.
+	 */
 	private ViewPager pager;
 
-	public static LoaderManager loaderManager;
+	/**
+	 * Адаптер, используемый вьюпейджером.
+	 */
+	private MyFragmentPagerAdapter adapter;
 
-	// public static TreeMap<Date, Float> data;
-	public static ArrayList<Date[]> graph_axis_x;
-	public static ArrayList<double[]> graph_axis_y;
-
-	// Данные, хранимые между сеансами.
+	/**
+	 * Параметры, используемые на уровне приложения.
+	 */
 	public String sourceServerPathString;
 	public String dateBeginString;
 	public String dateEndString;
 
+	/**
+	 * Ссылка на график.
+	 */
 	public static LineGraph lineGraph;
 
-	private MyFragmentPagerAdapter adapter;
-
-	// Фрагмент, содержащий вью графика.
+	/**
+	 * Фрагмент, содержащий вью графика.
+	 */
 	public static View graphFragmentView;
 
-	// Вью, содержащее график.
-	public static GraphicalView graphicalView = null;
+	// Данные, отображаемые графиком.
+	public static ArrayList<Date[]> graph_axis_x;
+	public static ArrayList<double[]> graph_axis_y;
 
 	/**
 	 * Флаг необходимости обновить график.
@@ -96,42 +118,51 @@ public class Main extends FragmentActivity implements
 	 */
 	public static boolean updateTable;
 
-	public static Activity mainActivity = null;
-
 	/**
 	 * Ссылка на адаптер БД.
-	 * 
 	 */
 	public static DatabaseAdapter dbAdapter;
 
-	// Адаптер для списка.
+	/**
+	 * Адаптер для списка.
+	 * 
+	 */
 	public static SimpleCursorAdapter scAdapter;
 
-	// Курсор набора отображаемых данных.
+	/**
+	 * Курсор набора отображаемых данных.
+	 * 
+	 */
 	public static Cursor cursorCurrentData;
 
-	// Курсор набора отображаемых данных в обратной сортировке (используется для
-	// отображения списка).
+	/**
+	 * Курсор набора отображаемых данных в обратной сортировке (используется для
+	 * отображения списка).
+	 * 
+	 */
 	public static Cursor cursorCurrentDataBackward;
 
-	public Main() {
-		mainActivity = this;
-	}
-
-	// Интерфейс, который должен поддерживаться фрагментом для его обновления.
+	/**
+	 * Интерфейс, который должен поддерживаться фрагментом для его обновления.
+	 */
 	public interface FragmentUpdateListener {
 		public void update(Bundle bundle);
 	}
 
-	// ///////////////////////
-	// ///////////////////////
-	// ЖИЗНЕННЫЙ ЦИКЛ
+	// ///////////////////////////
+	// ЖИЗНЕННЫЙ ЦИКЛ АКТИВНОСТИ
 
 	// Это тот Bundle, который сохранен в onSaveInstanceState.
 	public void onCreate(Bundle savedInstanceState) {
 
-		Log.d(Main.TAG,
-				"Main.onCreate(): восстановление сохраненных значений, установка темы, установка вью, назначение адаптера для вьюпейджера.");
+		if (savedInstanceState != null) {
+			Log.d(Main.TAG,
+					"Main.onCreate(): восстановление сохраненных значений, установка темы, установка вью, назначение адаптера для вьюпейджера. savedInstanceState = "
+							+ savedInstanceState.toString());
+		} else {
+			Log.d(Main.TAG,
+					"Main.onCreate(): восстановление сохраненных значений, установка темы, установка вью, назначение адаптера для вьюпейджера. savedInstanceState = null");
+		}
 
 		super.onCreate(savedInstanceState);
 
@@ -162,15 +193,8 @@ public class Main extends FragmentActivity implements
 				SOURCE_SERVER_PATH_FIELDNAME, "");
 		dateBeginString = sharedPrefs.getString(DATE_BEGIN_FIELDNAME, "");
 		dateEndString = sharedPrefs.getString(DATE_END_FIELDNAME, "");
-		currentTheme = sharedPrefs.getString(CURRENT_THEME_ID_FIELDNAME, "");
-		String storedRecordsMaxAmount_String = sharedPrefs.getString(
-				STORED_RECORDS_MAX_AMOUNT, "");
-		if (storedRecordsMaxAmount_String.isEmpty()) {
-			storedRecordsMaxAmount = 100;
-		} else {
-			storedRecordsMaxAmount = Integer
-					.valueOf(storedRecordsMaxAmount_String);
-		}
+		currentTheme = sharedPrefs.getString(Main.CURRENT_THEME_ID_FIELDNAME,
+				"");
 
 		// 2)
 		Bundle extras = getIntent().getExtras();
@@ -185,7 +209,8 @@ public class Main extends FragmentActivity implements
 						.getString(SOURCE_SERVER_PATH_FIELDNAME);
 				dateBeginString = savedState.getString(DATE_BEGIN_FIELDNAME);
 				dateEndString = savedState.getString(DATE_END_FIELDNAME);
-				currentTheme = savedState.getString(CURRENT_THEME_ID_FIELDNAME);
+				currentTheme = savedState
+						.getString(Main.CURRENT_THEME_ID_FIELDNAME);
 			}
 		}
 
@@ -198,11 +223,11 @@ public class Main extends FragmentActivity implements
 					.getString(DATE_BEGIN_FIELDNAME);
 			dateEndString = savedInstanceState.getString(DATE_END_FIELDNAME);
 			currentTheme = savedInstanceState
-					.getString(CURRENT_THEME_ID_FIELDNAME);
+					.getString(Main.CURRENT_THEME_ID_FIELDNAME);
 		}
 
-		// Установка темы.
-		// Если текущая тема не указана, то устанавливается тема по умолчанию.
+		// Если текущая тема не указана, то по умолчанию используется первая
+		// тема из списка.
 		if (currentTheme.isEmpty()) {
 			String[] themes = getResources().getStringArray(
 					R.array.ThemesIDList_Str);
@@ -213,13 +238,13 @@ public class Main extends FragmentActivity implements
 		// по умолчанию.
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
-		String themeInPrefs = sp.getString("currentTheme", "");
+		String themeInPrefs = sp.getString(Main.CURRENT_THEME_ID_FIELDNAME, "");
 		if (themeInPrefs.isEmpty()) {
 
 			themeInPrefs = currentTheme;
 
 			SharedPreferences.Editor editor = sp.edit();
-			editor.putString("currentTheme", currentTheme);
+			editor.putString(Main.CURRENT_THEME_ID_FIELDNAME, currentTheme);
 
 			editor.apply();
 
@@ -231,8 +256,7 @@ public class Main extends FragmentActivity implements
 		}
 
 		// Установка темы.
-		int themeID = getThemeID(currentTheme);
-		setTheme(themeID);
+		setTheme(getThemeID(currentTheme));
 
 		// Установка вью.
 		setContentView(R.layout.main);
@@ -243,76 +267,75 @@ public class Main extends FragmentActivity implements
 		adapter = new MyFragmentPagerAdapter(getSupportFragmentManager());
 		pager.setAdapter(adapter);
 
-		// // Установка слушателя событий вьюпейджера - пока невостребованы.
-		// pager.setOnPageChangeListener(new OnPageChangeListener() {
-		//
-		// @Override
-		// public void onPageSelected(int position) {
-		// }
-		//
-		// @Override
-		// public void onPageScrolled(int position, float positionOffset,
-		// int positionOffsetPixels) {
-		// }
-		//
-		// @Override
-		// public void onPageScrollStateChanged(int state) {
-		// }
-		// });
-
+		// Экземпляр класса графика.
+		Main.lineGraph = new LineGraph();
 	}
 
-	// @Override
-	// public void onRestart() {
-	//
-	// Log.d(Main.TAG, "Main.onRestart()");
-	//
-	// super.onRestart();
-	// }
+	@Override
+	public void onRestart() {
+
+		Log.d(Main.TAG, "Main.onRestart()");
+
+		super.onRestart();
+	}
 
 	@Override
 	public void onStart() {
 
-		Log.d(Main.TAG,
-				"Main.onStart(): Инициализация менеджера загрузок, создание и открытие адаптера БД.");
+		Log.d(Main.TAG, "Main.onStart(): Инициализация менеджера загрузок.");
 
 		super.onStart();
 
-		// Инициализация адаптера БД, позволяющего записывать и считывать данные
-		// из БД.
-		// Инициализировать его необходимо здесь, т.к. когда пользователь
-		// возвращается из меню настроек в активность, то onCreate() не
-		// вызывается.
-		// Адаптер нужно инициализировать первым, т.к. он используется в
-		// процедуре onLoadFinished, запускаемой после вызова
-		// Main.loaderManager.initLoader.
-		Main.dbAdapter = new DatabaseAdapter(this);
-		Main.dbAdapter.open(); // TODO: Не вызывать из UI!
-
 		// Инициализация загрузчика.
-		Main.loaderManager = getSupportLoaderManager();
-		Main.loaderManager.initLoader(LOADER_ID, null, this);
+		getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+
+	}
+
+	@Override
+	public void onRestoreInstanceState(Bundle savedInstanceState) {
+
+		Log.d(Main.TAG, "Main.onRestoreInstanceState(): savedInstanceState = "
+				+ savedInstanceState.toString());
+
+		super.onRestoreInstanceState(savedInstanceState);
+	}
+
+	@Override
+	public void onPostCreate(Bundle savedInstanceState) {
+
+		if (savedInstanceState != null) {
+			Log.d(Main.TAG, "Main.onPostCreate(): savedInstanceState = "
+					+ savedInstanceState.toString());
+		} else {
+			Log.d(Main.TAG, "Main.onPostCreate(): savedInstanceState = null");
+		}
+
+		super.onPostCreate(savedInstanceState);
 
 	}
 
 	@Override
 	public void onResume() {
 
-		Log.d(Main.TAG, "Main.onResume(): перезапуск, если изменилась тема.");
+		Log.d(Main.TAG,
+				"Main.onResume(): перезапуск, если изменилась тема, создание адаптера БД DatabaseAdapter и его открытие.");
 
 		super.onResume();
 
+		// if (true)
+		// return;
+
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
-		String themeInPrefs = sp.getString("currentTheme", "");
+		String themeInPrefs = sp.getString(Main.CURRENT_THEME_ID_FIELDNAME, "");
 
 		// Если тема, полученная из настроек не совпадает с текущей темой,
 		// значит пауза активности была связана с заходом в экран настроек и
 		// текущую тему нужно поменять.
 		// А т.к. текущую тему возможно изменить только перед установкой любых
 		// вью контекста (перед вызовом setContentView(View) или inflate(int,
-		// ViewGroup)), то приложение перегружается, установка темы
-		// производится в событии onCreate.
+		// ViewGroup)), то приложение нужно перезагрузить и установка темы
+		// будет произведена в событии onCreate.
 		// После вызова finish() сохранение текущих данных производится в
 		// событии onDestroy().
 		if (themeInPrefs.isEmpty()) {
@@ -320,7 +343,7 @@ public class Main extends FragmentActivity implements
 			themeInPrefs = currentTheme;
 
 			SharedPreferences.Editor editor = sp.edit();
-			editor.putString("currentTheme", currentTheme);
+			editor.putString(Main.CURRENT_THEME_ID_FIELDNAME, currentTheme);
 			editor.apply();
 		}
 
@@ -345,7 +368,7 @@ public class Main extends FragmentActivity implements
 					sourceServerPathString);
 			savedInstanceState.putString(DATE_BEGIN_FIELDNAME, dateBeginString);
 			savedInstanceState.putString(DATE_END_FIELDNAME, dateEndString);
-			savedInstanceState.putString(CURRENT_THEME_ID_FIELDNAME,
+			savedInstanceState.putString(Main.CURRENT_THEME_ID_FIELDNAME,
 					currentTheme);
 
 			Intent intent = getIntent();
@@ -353,6 +376,78 @@ public class Main extends FragmentActivity implements
 
 			startActivity(intent);
 		}
+
+		// Инициализация адаптера БД, позволяющего записывать и считывать данные
+		// из БД.
+		// Инициализировать его необходимо здесь, т.к. когда пользователь
+		// возвращается из меню настроек в активность, то onCreate() не
+		// вызывается.
+		// Адаптер нужно инициализировать первым, т.к. он используется в
+		// процедуре onLoadFinished, запускаемой после вызова
+		// Main.loaderManager.initLoader.
+		Main.dbAdapter = new DatabaseAdapter(this);
+		Main.dbAdapter.open(); // TODO: Не вызывать из UI!
+	}
+
+	// Вызывается, чтобы получить состояние экземпляра из активности перед
+	// уничтожением таким образом, чтобы это состояние могло быть восстановлено
+	// в onCreate(Bundle) или в onRestoreInstanceState(Bundle) (Bundle,
+	// сформированное в этом методе будет передано в оба метода).
+	// Метод вызывается до того, как активность будет уничтожена и когда
+	// она будет запущена через некоторое время, активность сможет восстановить
+	// своё состояние. Например, если активность Б запущена из активности А, и в
+	// какой-то момент времени активность А уничтожена ради высвобождения
+	// ресурсов, активность А будет иметь возможность сохранить текущее
+	// состояние своего пользовательского интерфейса через этот метод. Поэтому
+	// когда пользователь вернется в активность А, состояние пользовательского
+	// интерфейса м.б. восстановлено через onCreate(Bundle) или
+	// onRestoreInstanceState(Bundle).
+	// Не путайте этот метод с вызовами методов жизненного цикла активности,
+	// такими, как метод onPause(), которые всегда вызываются когда активность
+	// уходит на задний фон или уничтожается, или метод onStop(), который
+	// вызывается перед уничтожением.
+	// Один пример, когда вызывается onPause() и onStop(), но не
+	// вызывается onSaveInstanceState(Bundle) - это когда пользователь
+	// возвращается из активности Б в активность А: нет необходимости вызывать
+	// onSaveInstanceState(Bundle) в активности Б т.к. данный экземпляр никогда
+	// не будет восстановлен, поэтому система избегает этого вызова.
+	// Еще пример когда будет вызван onPause(), но не будет вызван
+	// onSaveInstanceState(Bundle) - это когда активность Б запущена на переднем
+	// плане перед активностью А: система может избежать вызова
+	// onSaveInstanceState(Bundle) в активности А, если она не уничтожалась в
+	// течение жизненного цикла активности Б с того момента как состояние
+	// интерфейса пользователя активности А остается неизменным.
+	//
+	// !!!
+	// Реализация по-умолчанию заботится о большинстве состояний
+	// пользовательского интерфейса путем вызова onSaveInstanceState() для
+	// каждого вью в иерархии, имеющего идентификатор и путем сохранения
+	// идентификатора вью, имеющего текущий фокус (все из которых восстановлены
+	// реализацией по-умолчанию метода onRestoreInstanceState(Bundle)). Если вы
+	// перегрузите этот метод чтобы сохранить дополнительную информацию, не
+	// охваченную каждым индивидуальным вью, вы скорее всего захотите вызвать
+	// реализацию по-умолчанию, в противном случае будьте готовы сами
+	// сохранять все состояния каждого вью.
+	//
+	// В случае вызова этот метод срабатывает перед onStop(). Нет гарантий,
+	// произойдет он до или после onPause().
+	// Параметры:
+	// outState - Bundle в котором нужно размещать сохраненное состояние.
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+
+		Log.d(Main.TAG, "Main.onSaveInstanceState(): сохранение настроек.");
+
+		// Если не вызывать, то не сохраняется:
+		// - текущая страница ViewPager;
+		// - текущая строка списка.
+		super.onSaveInstanceState(outState);
+
+		// Сохранение полей класса Main, которые м.б. восстановлены в onCreate.
+		outState.putString(SOURCE_SERVER_PATH_FIELDNAME, sourceServerPathString);
+		outState.putString(DATE_BEGIN_FIELDNAME, dateBeginString);
+		outState.putString(DATE_END_FIELDNAME, dateEndString);
+		outState.putString(Main.CURRENT_THEME_ID_FIELDNAME, currentTheme);
 	}
 
 	@Override
@@ -371,26 +466,27 @@ public class Main extends FragmentActivity implements
 
 		Log.d(Main.TAG, "Main.onPause(): ЗАКРЫТИЕ АДАПТЕРА БД!!!");
 
-		dbAdapter.close();
-		dbAdapter = null;
-
+		if (dbAdapter != null) {
+			dbAdapter.close();
+			dbAdapter = null;
+		}
 	}
 
-	// @Override
-	// public void onStop() {
-	//
-	// Log.d(Main.TAG, "Main.onStop()");
-	//
-	// super.onStop();
-	// }
-	//
-	// @Override
-	// public void onDestroy() {
-	//
-	// Log.d(Main.TAG, "Main.onDestroy()");
-	//
-	// super.onDestroy();
-	// }
+	@Override
+	public void onStop() {
+
+		Log.d(Main.TAG, "Main.onStop()");
+
+		super.onStop();
+	}
+
+	@Override
+	public void onDestroy() {
+
+		Log.d(Main.TAG, "Main.onDestroy()");
+
+		super.onDestroy();
+	}
 
 	// КОНЕЦ ЖИЗНЕННОГО ЦИКЛА
 	// ///////////////////////
@@ -408,6 +504,19 @@ public class Main extends FragmentActivity implements
 			super(fm);
 		}
 
+		/**
+		 * Возвращает количество страниц адаптера.
+		 */
+		@Override
+		public int getCount() {
+			return PAGE_COUNT;
+		}
+
+		/**
+		 * Возвращает фрагмент, соответствующий указанной позиции страницы.
+		 * 
+		 * @see android.support.v4.app.FragmentPagerAdapter#getItem(int)
+		 */
 		@Override
 		public Fragment getItem(int position) {
 
@@ -427,11 +536,9 @@ public class Main extends FragmentActivity implements
 
 		}
 
-		@Override
-		public int getCount() {
-			return PAGE_COUNT;
-		}
-
+		/**
+		 * Возвращает заголовок страницы, соответствующий указанной позиции.
+		 */
 		@Override
 		public CharSequence getPageTitle(int position) {
 
@@ -538,7 +645,7 @@ public class Main extends FragmentActivity implements
 	public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
 
 		Log.d(Main.TAG,
-				"Main.onCreateLoader(): Создание экземпляра асинхронного загрузчика.");
+				"Main.onCreateLoader(): Создание экземпляра асинхронного загрузчика DataLoader.");
 
 		// Метод-фабрика, просто возвращающий экземпляр нового загрузчика.
 		// Метод вызывается LoaderManager-ом при первом создании загрузчика.
@@ -577,64 +684,57 @@ public class Main extends FragmentActivity implements
 		return dataLoader;
 	}
 
-	// Метод вызывается автоматически когда Loader закончил загрузку. Обычно
-	// этот метод используется для обновления UI приложения с использованием
-	// загруженных данных. Клиент может (и имеет право) предполагать, что
-	// новые данные будут возвращены в этот метод каждый раз, когда доступны
-	// новые данные. Помните, что это работа Loader-а отслеживать источник
-	// данных и выполнять новую асинхронную загрузку. LoaderManager получит
-	// результаты загрузки как только она будет завершена и затем перешлет
-	// результат в метод onLoadFinished объекта обратного вызова для его
-	// использования клиентом.
-
-	// Вызывается, когда предварительно созданный загрузчик закончил свою
-	// загрузку. Заметьте, что обычно приложению не разрешено выполнять
-	// транзакции фрагментов во время вызова этого события, которые смогут
-	// произойти после сохранения состояния активности.
-
-	// Эта функция гарантированно вызывается перед освобождением последних
-	// данных, предоставленных загрузчику. В этот момент вам следует удалить
-	// все использования старых данных (т.к. они будут скоро освобождены),
-	// но не следует выполнять собственное освобождение этих данных, т.к.
-	// ими владеет загрузчик и сам позаботится об этом. Загрузчик
-	// позаботится об управлении своими данными, поэтому вам не нужно этого
-	// делать.
-
-	// В частности:
-	// - загрузчик будет отслеживать изменения данных и сообщать их вам
-	// через новые вызовы этого события. Вам не следует отслеживать данные
-	// самостоятельно. Например, если этими данными является Cursor и вы
-	// размещаете его в CursorAdapter, используйте конструктор
-	// CursorAdapter-а не передавая ни FLAG_AUTO_REQUERY, ни
-	// FLAG_REGISTER_CONTENT_OBSERVER (т.е. используйте 0 для аргумента
-	// флагов). Это предотвратит CursorAdapter от исполнения его
-	// собственного наблюдения за Cursor, в котором нет необходимости потому
-	// что когда изменения происходят вы получите новый Cursor при следующем
-	// вызове этого события;
-	// - загрузчик освободит данные как только узнает, что приложение больше
-	// их не использует. Например, если данные являются Cursor из
-	// CursorLoader, то вам не следует вызывать метод close()
-	// самостоятельно. Если Cursor размещен в CursorAdapter, вам следует
-	// использовать метод swapCursor() для того, чтобы старый Cursor не
-	// закрывался.
-
-	// Parameters
-	// loader The Loader that has finished.
-	// cursorOfReceivedData The data generated by the Loader.
+	/**
+	 * Метод вызывается автоматически когда Loader закончил загрузку. Обычно
+	 * этот метод используется для обновления UI приложения с использованием
+	 * загруженных данных. Клиент может (и имеет право) предполагать, что новые
+	 * данные будут возвращены в этот метод каждый раз, когда доступны новые
+	 * данные. Помните, что это работа Loader-а отслеживать источник данных и
+	 * выполнять новую асинхронную загрузку. LoaderManager получит результаты
+	 * загрузки как только она будет завершена и затем перешлет результат в
+	 * метод onLoadFinished объекта обратного вызова для его использования
+	 * клиентом.
+	 * 
+	 * Вызывается, когда предварительно созданный загрузчик закончил свою
+	 * загрузку. Заметьте, что обычно приложению не разрешено выполнять
+	 * транзакции фрагментов во время вызова этого события, которые смогут
+	 * произойти после сохранения состояния активности.
+	 * 
+	 * Эта функция гарантированно вызывается перед освобождением последних
+	 * данных, предоставленных загрузчику. В этот момент вам следует удалить все
+	 * использования старых данных (т.к. они будут скоро освобождены), но не
+	 * следует выполнять собственное освобождение этих данных, т.к. ими владеет
+	 * загрузчик и сам позаботится об этом. Загрузчик позаботится об управлении
+	 * своими данными, поэтому вам не нужно этого делать.
+	 * 
+	 * // В частности: - загрузчик будет отслеживать изменения данных и сообщать
+	 * их вам через новые вызовы этого события. Вам не следует отслеживать
+	 * данные самостоятельно. Например, если этими данными является Cursor и вы
+	 * размещаете его в CursorAdapter, используйте конструктор CursorAdapter-а
+	 * не передавая ни FLAG_AUTO_REQUERY, ни FLAG_REGISTER_CONTENT_OBSERVER
+	 * (т.е. используйте 0 для аргумента флагов). Это предотвратит CursorAdapter
+	 * от исполнения его собственного наблюдения за Cursor, в котором нет
+	 * необходимости потому что когда изменения происходят вы получите новый
+	 * Cursor при следующем вызове этого события; - загрузчик освободит данные
+	 * как только узнает, что приложение больше их не использует. Например, если
+	 * данные являются Cursor из CursorLoader, то вам не следует вызывать метод
+	 * close() самостоятельно. Если Cursor размещен в CursorAdapter, вам следует
+	 * использовать метод swapCursor() для того, чтобы старый Cursor не
+	 * закрывался.
+	 * 
+	 * @param loader
+	 *            The Loader that has finished.
+	 * @param cursorOfReceivedData
+	 *            The data generated by the Loader.
+	 */
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader,
 			Cursor cursorOfReceivedData) {
 
 		Log.d(Main.TAG,
-				"Main.onLoadFinished(): установка ссылок на курсоры, настройка и заполнение графика, уведомление FragmentPagerAdapter.");
+				"Main.onLoadFinished(): установка ссылок на курсоры, настройка, заполнение и установка вью графика, уведомление FragmentPagerAdapter.");
 
-		// Уведомление адаптера вьюпейджера, что состав данных изменился.
-		// Нужно вызывать до создания графика, чтобы он отрисовался!
-		// TODO: При смене ориентации экрана этот метод вызывается, но
-		// почему-то это не приводит к последующему вызову getItemPosition!
-		adapter.notifyDataSetChanged();
-
-		if (cursorOfReceivedData == null) {
+		if (Main.dbAdapter != null && cursorOfReceivedData == null) {
 			cursorOfReceivedData = Main.dbAdapter
 					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " ASC");
 		}
@@ -645,24 +745,39 @@ public class Main extends FragmentActivity implements
 			;
 		}
 
+		// if (Main.cursorCurrentData != cursorOfReceivedData) {
 		Main.cursorCurrentData = cursorOfReceivedData;
+
+		// Уведомление адаптера вьюпейджера, что состав данных изменился.
+		// Нужно вызывать до создания графика, чтобы он отрисовался!
+		// TODO: При смене ориентации экрана этот метод вызывается, но
+		// почему-то это не приводит к последующему вызову getItemPosition!
+
+		// Этот метод д.б. вызван приложением если данные, отображаемые
+		// адаптером, были изменены и ассоциированные вью д.б. обновлены.
+		// После вызова этого метода будет вызвана getItemPosition(Object
+		// object).
+		adapter.notifyDataSetChanged();
+		// }
 
 		// Если курсор получен, то можно получить и курсор для обратного обхода.
 		if (Main.cursorCurrentData != null) {
 
 			Log.d(Main.TAG,
-					"DataLoader.onLoadFinished(): СОЗДАНИЕ ОБРАТНОГО КУРСОРА НА ВСЕ ЗАПИСИ!");
-			Main.cursorCurrentDataBackward = Main.dbAdapter
-					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " DESC");
-			;
+					"Main.onLoadFinished(): СОЗДАНИЕ ОБРАТНОГО КУРСОРА НА ВСЕ ЗАПИСИ!");
+			if (Main.dbAdapter != null) {
+				Main.cursorCurrentDataBackward = Main.dbAdapter
+						.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME
+								+ " DESC");
+			}
 
 			// startManagingCursor(Main.cursorCurrentData);
 			// startManagingCursor(Main.cursorCurrentDataBackward);
 		}
 
-		// Настройка графика.
-		String[] series = new String[] { getResources().getString(
-				R.string.graphValuesName1) };
+		// // Настройка графика.
+		// String[] series = new String[] { getResources().getString(
+		// R.string.graphValuesName1) };
 
 		Date[] x_values = new Date[rowsInDatabase];
 		double[] y_values = new double[rowsInDatabase];
@@ -699,14 +814,15 @@ public class Main extends FragmentActivity implements
 
 			}
 
-			graph_axis_x = new ArrayList<Date[]>();
-			graph_axis_x.add(x_values);
+			Main.graph_axis_x = new ArrayList<Date[]>();
+			Main.graph_axis_x.add(x_values);
 
-			graph_axis_y = new ArrayList<double[]>();
-			graph_axis_y.add(y_values);
+			Main.graph_axis_y = new ArrayList<double[]>();
+			Main.graph_axis_y.add(y_values);
 
-			Main.lineGraph = new LineGraph();
-			Main.lineGraph.adjust(this, series, graph_axis_x, graph_axis_y);
+			// Main.lineGraph.adjust(this, series, graph_axis_x, graph_axis_y);
+			// Main.lineGraph.renderer.setApplyBackgroundColor(true);
+			// Main.lineGraph.renderer.setMarginsColor(Color.TRANSPARENT);
 
 			// Уведомление открытых страниц (фрагментов) об обновлении (закрытые
 			// фрагменты сами обновятся при их создании в onCreateView()).
@@ -741,28 +857,32 @@ public class Main extends FragmentActivity implements
 			// from a database, this can be a real problem and a waste of
 			// resources.
 
-			updateGraph = true;
-			updateTable = true;
+			Main.updateGraph = true;
+			Main.updateTable = true;
 
-			// Этот метод д.б. вызван приложением если данные, отображаемые
-			// адаптером, были изменены и ассоциированные вью д.б. обновлены.
-			// После вызова этого метода будет вызвана getItemPosition(Object
-			// object).
+			// // Очистка всех существующих вью и добавление только что
+			// полученного
+			// // вью графика в иерархию.
+			// if (Main.graphFragmentView != null) {
+			//
+			// Log.d(Main.TAG,
+			// "Main.onLoadFinished(): Добавление графика во ФРАГМЕНТ!");
+			//
+			// // Получение вью графика.
+			// GraphicalView graphicalView = ChartFactory.getTimeChartView(
+			// lineGraph.context, lineGraph.dataset,
+			// lineGraph.renderer, "HH:mm");
+			//
+			// LinearLayout linearLayout = (LinearLayout) graphFragmentView
+			// .findViewById(R.id.graph);
+			// linearLayout.removeAllViews();
+			// linearLayout.addView(graphicalView, new LayoutParams(
+			// LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+			// } else {
+			// Log.d(Main.TAG, "Main.onLoadFinished(): НЕТ ФРАГМЕНТА ГРАФИКА!");
+			// }
 
-			Main.graphicalView = ChartFactory.getTimeChartView(
-					lineGraph.context, lineGraph.dataset, lineGraph.renderer,
-					"HH:mm");
-
-			if (graphFragmentView != null) {
-				LinearLayout linearLayout = (LinearLayout) graphFragmentView
-						.findViewById(R.id.graph);
-				linearLayout.removeAllViews();
-				linearLayout.addView(Main.graphicalView, new LayoutParams(
-						LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-			}
-
-			lineGraph.renderer.setApplyBackgroundColor(true);
-			lineGraph.renderer.setMarginsColor(Color.TRANSPARENT);
+			Main.setGraph(this);
 
 			// Сообщение пользователю.
 			Toast.makeText(
@@ -772,42 +892,57 @@ public class Main extends FragmentActivity implements
 		}
 	}
 
-	// Компаратор используется для сравнения двух объектов чтобы определить
-	// их
-	// порядок следования относительно друг-друга. В некоторой коллекции
-	// компаратор может быть использован для получения полностью
-	// отсортированной
-	// коллекции. Чтобы компаратор давал одинаковые результаты для равных
-	// значений его метод должен возвращать 0 для каждой пары элементов, для
-	// которой метод a.equals(b) возвращает ИСТИНА. Рекомендуется, чтобы
-	// компаратор реализовывал интерфейс Serializable.
-	// private class DecendingComparator implements Comparator<Date>,
-	// Serializable {
-	//
-	// // Идентификатор, используемый для сериализации.
-	// private static final long serialVersionUID = 1703654321884837005L;
-	//
-	// @SuppressWarnings("unused")
-	// // private HashMap<Date, Float> mapToSort;
-	// private Cursor mapToSort;
-	//
-	// // public DecendingComparator(HashMap<Date, Float> mapToSort) {
-	// public DecendingComparator(Cursor mapToSort) {
-	// this.mapToSort = mapToSort;
-	// }
-	//
-	// @Override
-	// public int compare(Date lhs, Date rhs) {
-	//
-	// if (lhs.before(rhs)) {
-	// return 1;
-	// } else if (lhs.after(rhs)) {
-	// return -1;
-	// } else {
-	// return 0;
-	// }
-	// }
-	// }
+	/**
+	 * Настройка и отображение графика.
+	 */
+	public static void setGraph(Context context) {
+
+		if (!Main.updateGraph)
+			return;
+
+		if (Main.graphFragmentView == null)
+			return;
+
+		if (Main.lineGraph == null)
+			return;
+
+		// Настройка графика.
+		String[] series = new String[] { context.getResources().getString(
+				R.string.graphValuesName1) };
+
+		Main.lineGraph.adjust(context, series, Main.graph_axis_x,
+				Main.graph_axis_y);
+
+		Log.d(Main.TAG, "Main.setGraph(): Добавление графика во ФРАГМЕНТ!");
+
+		Log.d(Main.TAG, "Main.setGraph(): Цвет бордюра = ["
+				+ Main.lineGraph.renderer.getMarginsColor() + "].");
+
+		// Получение вью графика. Должно вызываться после adjust(), чтобы
+		// сформировался Main.lineGraph.renderer.
+		GraphicalView graphicalView = ChartFactory.getTimeChartView(
+				Main.lineGraph.context, Main.lineGraph.dataset,
+				Main.lineGraph.renderer, "HH:mm");
+
+		// Установка оформления. Должна вызываться после getTimeChartView(),
+		// т.к. в противном случае значения оформления сбрасываются к исходным.
+		Main.lineGraph.renderer.setApplyBackgroundColor(true);
+		Main.lineGraph.renderer.setMarginsColor(Color.TRANSPARENT);
+
+		LinearLayout linearLayout = (LinearLayout) graphFragmentView
+				.findViewById(R.id.graph);
+
+		// Очистка всех существующих вью и добавление только что полученного
+		// вью графика в иерархию.
+		linearLayout.removeAllViews();
+
+		// Добавление вью графика в иерархию.
+		linearLayout.addView(graphicalView, new LayoutParams(
+				LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+
+		Main.updateGraph = false;
+
+	}
 
 	// Наличие метода требуется интерфейсом LoaderManager.LoaderCallbacks.
 	@Override
@@ -820,66 +955,9 @@ public class Main extends FragmentActivity implements
 		// должно удалить любые имеющиеся ссылки на данные загрузчика.
 	}
 
-	// Вызывается, чтобы получить состояние экземпляра из активности перед
-	// уничтожением таким образом, чтобы это состояние могло быть восстановлено
-	// в onCreate(Bundle) или в onRestoreInstanceState(Bundle) (Bundle,
-	// сформированное в этом методе будет передано в оба метода).
-	// Метод вызывается до того, как активность будет уничтожена и когда
-	// она будет запущена через некоторое время, активность сможет восстановить
-	// своё состояние. Например, если активность Б запущена из активности А, и в
-	// какой-то момент времени активность А уничтожена ради высвобождения
-	// ресурсов, активность А будет иметь возможность сохранить текущее
-	// состояние своего пользовательского интерфейса через этот метод. Поэтому
-	// когда пользователь вернется в активность А, состояние пользовательского
-	// интерфейса м.б. восстановлено через onCreate(Bundle) или
-	// onRestoreInstanceState(Bundle).
-	// Не путайте этот метод с вызовами методов жизненного цикла активности,
-	// такими, как метод onPause(), которые всегда вызываются когда активность
-	// уходит на задний фон или уничтожается, или метод onStop(), который
-	// вызывается перед уничтожением.
-	// Один пример, когда вызывается onPause() и onStop(), но не
-	// вызывается onSaveInstanceState(Bundle) - это когда пользователь
-	// возвращается из активности Б в активность А: нет необходимости вызывать
-	// onSaveInstanceState(Bundle) в активности Б т.к. данный экземпляр никогда
-	// не будет восстановлен, поэтому система избегает этого вызова.
-	// Еще пример когда будет вызван onPause(), но не будет вызван
-	// onSaveInstanceState(Bundle) - это когда активность Б запущена на переднем
-	// плане перед активностью А: система может избежать вызова
-	// onSaveInstanceState(Bundle) в активности А, если она не уничтожалась в
-	// течение жизненного цикла активности Б с того момента как состояние
-	// интерфейса пользователя активности А остается неизменным.
-	//
-	// !!!
-	// Реализация по-умолчанию заботится о большинстве состояний
-	// пользовательского интерфейса путем вызова onSaveInstanceState() для
-	// каждого вью в иерархии, имеющего идентификатор и путем сохранения
-	// идентификатора вью, имеющего текущий фокус (все из которых восстановлены
-	// реализацией по-умолчанию метода onRestoreInstanceState(Bundle)). Если вы
-	// перегрузите этот метод чтобы сохранить дополнительную информацию, не
-	// охваченную каждым индивидуальным вью, вы скорее всего захотите вызвать
-	// реализацию по-умолчанию, в противном случае будьте готовы сами
-	// сохранять все состояния каждого вью.
-	//
-	// В случае вызова этот метод срабатывает перед onStop(). Нет гарантий,
-	// произойдет он до или после onPause().
-	// Параметры:
-	// outState - Bundle в котором нужно размещать сохраненное состояние.
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-
-		// Если не вызывать, то не сохраняется:
-		// - текущая страница ViewPager;
-		// - текущая строка списка.
-		super.onSaveInstanceState(outState);
-
-		// Сохранение полей класса Main, которые м.б. восстановлены в onCreate.
-		outState.putString(SOURCE_SERVER_PATH_FIELDNAME, sourceServerPathString);
-		outState.putString(DATE_BEGIN_FIELDNAME, dateBeginString);
-		outState.putString(DATE_END_FIELDNAME, dateEndString);
-		outState.putString(CURRENT_THEME_ID_FIELDNAME, currentTheme);
-	}
-
-	// Вызывается только один раз при первом создании меню.
+	/**
+	 * Создание меню. Вызывается только один раз при первом создании меню.
+	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -934,7 +1012,7 @@ public class Main extends FragmentActivity implements
 	}
 
 	/**
-	 * Сохранение установок для восстановления при последующем запуске
+	 * Сохранение параметров для восстановления при последующем запуске
 	 * приложения.
 	 */
 	private void savePreferences() {
@@ -946,13 +1024,18 @@ public class Main extends FragmentActivity implements
 		editor.putString(SOURCE_SERVER_PATH_FIELDNAME, sourceServerPathString);
 		editor.putString(DATE_BEGIN_FIELDNAME, dateBeginString);
 		editor.putString(DATE_END_FIELDNAME, dateEndString);
-		editor.putString(CURRENT_THEME_ID_FIELDNAME, currentTheme);
+		editor.putString(Main.CURRENT_THEME_ID_FIELDNAME, currentTheme);
 
 		editor.apply();
 	}
 
-	// Получение программного идентификатора темы на основе её стрового
-	// идентификатора.
+	/**
+	 * Возвращает числовой идентификатор темы на основе строкового
+	 * идентификатора.
+	 * 
+	 * @param themeIDString
+	 * @return
+	 */
 	private int getThemeID(String themeIDString) {
 
 		int themeID = android.R.style.Theme_Light;

@@ -6,15 +6,8 @@
     <ListPreference
         android:entries="@array/ThemesNamesList"
         android:entryValues="@array/ThemesIDList_Str"
-        android:key="currentTheme"
+        android:key="currentTheme_id"
         android:summary="@string/ThemesListSummary"
         android:title="@string/ThemesListTitle" />
-
-    <EditTextPreference
-        android:defaultValue="100"
-        android:key="storedRecordsMaxAmount"
-        android:numeric="integer"
-        android:summary="@string/storedRecordsMaxAmountSummary"
-        android:title="@string/storedRecordsMaxAmountTitle" />
 
 </PreferenceScreen>

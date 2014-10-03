@@ -8,6 +8,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+/**
+ * Фрагмент, представляющий страницы для ViewPager-а.
+ * 
+ * @author programmer
+ * 
+ */
 public class PageFragment extends Fragment implements /* OnClickListener, */
 Main.FragmentUpdateListener {
 
@@ -48,6 +54,9 @@ Main.FragmentUpdateListener {
 		switch (pageNumber) {
 		case Main.PAGE_PREFS_INDEX: {
 
+			Log.d(Main.TAG,
+					"PageFragment.onCreateView(): Main.PAGE_PREFS_INDEX: ничего не делаем.");
+
 			// Ничего создавать не нужно, т.к. страница установок представляет
 			// собой отдельный фрагмент, реализующий слушателя жестов.
 
@@ -56,24 +65,31 @@ Main.FragmentUpdateListener {
 		case Main.PAGE_GRAPH_INDEX: {
 
 			Log.d(Main.TAG,
-					"PageFragment.onCreateView(): Main.PAGE_GRAPH_INDEX");
-
-			// Если страница пересоздана, то значит она уже обновлена.
-			Main.updateGraph = false;
+					"PageFragment.onCreateView(): Main.PAGE_GRAPH_INDEX: раздутие R.layout.graph, установка в Main ссылки на него.");
 
 			fragmentView = inflater.inflate(R.layout.graph, null);
 
 			Main.graphFragmentView = fragmentView;
 
+			Main.setGraph(getActivity());
+
 			break;
 		}
 		case Main.PAGE_TABLE_INDEX: {
 
-			// TODO: Повторный запрос!
-			Main.cursorCurrentDataBackward = Main.dbAdapter
-					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " DESC");
+			Log.d(Main.TAG,
+					"PageFragment.onCreateView(): Main.PAGE_TABLE_INDEX: получение обратного курсора, раздутие R.layout.list, создание DataAdapter и назначение его ListView.");
 
-			Log.d(Main.TAG, Main.cursorCurrentDataBackward.toString());
+			// TODO: Повторный запрос!
+			if (Main.dbAdapter != null) {
+				Main.cursorCurrentDataBackward = Main.dbAdapter
+						.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME
+								+ " DESC");
+			}
+
+			Log.d(Main.TAG,
+					"PageFragment.onCreateView(): Main.PAGE_TABLE_INDEX: обратный курсор = "
+							+ Main.cursorCurrentDataBackward.toString());
 
 			if (Main.cursorCurrentDataBackward.getCount() == 0) {
 				fragmentView = inflater.inflate(R.layout.no_data, null);
@@ -97,6 +113,24 @@ Main.FragmentUpdateListener {
 		}
 
 		return fragmentView;
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		Log.d(Main.TAG, "PageFragment.onActivityCreated()");
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		Log.d(Main.TAG, "PageFragment.onStart()");
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		Log.d(Main.TAG, "PageFragment.onResume()");
 	}
 
 	// Функция, требуемая FragmentUpdateListener. Действие не выполняет, т.к.
