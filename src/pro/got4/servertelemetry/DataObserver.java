@@ -3,7 +3,6 @@ package pro.got4.servertelemetry;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 /**
  * Наблюдатель, принимающий уведомления об изменении данных. Наблюдатель м.б.чем
@@ -23,7 +22,7 @@ public class DataObserver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
-		Log.d(Main.TAG, "DataObserver.onReceive()");
+		// Log.d(Main.TAG, "DataObserver.onReceive()");
 
 		// Сообщаем загрузчику, что данные изменились.
 		this.loader.onContentChanged();

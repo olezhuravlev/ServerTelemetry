@@ -22,7 +22,6 @@ public class DataAdapter extends ResourceCursorAdapter {
 
 		super(context, R.layout.list_item, cursor,
 				ResourceCursorAdapter.FLAG_AUTO_REQUERY);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

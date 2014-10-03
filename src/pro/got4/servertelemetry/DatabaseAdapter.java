@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 /**
  * Адаптер, через который производятся операции с БД.
@@ -59,7 +58,7 @@ public class DatabaseAdapter {
 		@Override
 		public void onCreate(SQLiteDatabase db) {
 
-			Log.d(Main.TAG, "DatabaseHelper.onCreate(SQLiteDatabase db)");
+			// Log.d(Main.TAG, "DatabaseHelper.onCreate(SQLiteDatabase db)");
 
 			db.execSQL(DATABASE_CREATE);
 		}
@@ -81,8 +80,8 @@ public class DatabaseAdapter {
 	 */
 	public DatabaseAdapter open() throws SQLException {
 
-		Log.d(Main.TAG,
-				"DatabaseAdapter.open(): создание экземпляра DatabaseHelper и создание или открытие БД. Не вызывать из UI!");
+		// Log.d(Main.TAG,
+		// "DatabaseAdapter.open(): создание экземпляра DatabaseHelper и создание или открытие БД. Не вызывать из UI!");
 
 		mDatabaseHelper = new DatabaseHelper(mContext);
 		mDatabase = mDatabaseHelper.getWritableDatabase();
@@ -95,13 +94,14 @@ public class DatabaseAdapter {
 	 */
 	public void close() {
 
-		Log.d(Main.TAG,
-				"DatabaseAdapter.close(): Закрытие экземпляра DatabaseHelper, если он существует.");
+		// Log.d(Main.TAG,
+		// "DatabaseAdapter.close(): Закрытие экземпляра DatabaseHelper, если он существует.");
 
-		if (mDatabaseHelper != null)
-			Log.d(Main.TAG,
-					"DatabaseAdapter.close(): ЗАКРЫТИЕ ЭКЗЕМПЛЯРА DatabaseHelper!!!");
-		mDatabaseHelper.close();
+		if (mDatabaseHelper != null) {
+			// Log.d(Main.TAG,
+			// "DatabaseAdapter.close(): ЗАКРЫТИЕ ЭКЗЕМПЛЯРА DatabaseHelper!!!");
+			mDatabaseHelper.close();
+		}
 	}
 
 	/**
@@ -128,8 +128,8 @@ public class DatabaseAdapter {
 
 		if (mDatabase != null) {
 
-			Log.d(Main.TAG,
-					"DatabaseAdapter.fetchAllNotes(): СОЗДАНИЕ КУРСОРА!!!");
+			// Log.d(Main.TAG,
+			// "DatabaseAdapter.fetchAllNotes(): СОЗДАНИЕ КУРСОРА!!!");
 
 			cursor = mDatabase.query(DATABASE_TABLE_NAME, new String[] {
 					KEY_ROWID_NAME, DATE_FIELD_NAME, VALUE_FIELD_NAME }, null,

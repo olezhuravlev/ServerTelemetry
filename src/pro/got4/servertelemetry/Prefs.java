@@ -167,7 +167,7 @@ public class Prefs extends Fragment implements
 					simpleDateFormat.toPattern());
 
 			// Очистка таблицы.
-			Main.dbAdapter.truncateTable(Main.dbAdapter.DATABASE_TABLE_NAME);
+			Main.dbAdapter.truncateTable(DatabaseAdapter.DATABASE_TABLE_NAME);
 
 			// Запускает новый или перезапускает существующий загрузчик в этом
 			// менеджере, регистрирует обратный вызов для него, и (если

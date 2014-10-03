@@ -17,7 +17,6 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.support.v4.content.CursorLoader;
-import android.util.Log;
 
 /**
  * Асинхронный загрузчик данных.
@@ -61,8 +60,8 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public void onStartLoading() {
 
-		Log.d(Main.TAG,
-				"DataLoader.onStartLoading(): если курсор существует, то его доставка. Создание экземпляра наблюдателя. Принудительный вызов загрузки, если обнаружено изменение контента.");
+		// Log.d(Main.TAG,
+		// "DataLoader.onStartLoading(): если курсор существует, то его доставка. Создание экземпляра наблюдателя. Принудительный вызов загрузки, если обнаружено изменение контента.");
 
 		// Если данные от предыдущей загрузки существуют, то их стоит доставить
 		// немедленно.
@@ -106,8 +105,8 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public Cursor loadInBackground() {
 
-		Log.d(Main.TAG,
-				"DataLoader.loadInBackground(): получение XML-данных, создание/открытие БД, загрузка данных в транзакции, создание и возвращение курсора на все записи.");
+		// Log.d(Main.TAG,
+		// "DataLoader.loadInBackground(): получение XML-данных, создание/открытие БД, загрузка данных в транзакции, создание и возвращение курсора на все записи.");
 
 		// Выполнение асинхронной загрузки. Метод вызывается в фоновом потоке и
 		// должен генерировать новый набор данных, которые д.б. возвращены
@@ -129,13 +128,14 @@ public class DataLoader extends CursorLoader {
 			NodeList pointNodes = doc.getElementsByTagName(POINT_ITEM_NAME);
 			length = pointNodes.getLength();
 
-			Log.d(Main.TAG, "DataLoader.loadInBackground(): получено записей: "
-					+ length + ".");
+			// Log.d(Main.TAG,
+			// "DataLoader.loadInBackground(): получено записей: " + length +
+			// ".");
 
 			if (Main.dbAdapter != null) {
 
-				Log.d(Main.TAG,
-						"DataLoader.loadInBackground(): создание/открытие БД, начало транзакции.");
+				// Log.d(Main.TAG,
+				// "DataLoader.loadInBackground(): создание/открытие БД, начало транзакции.");
 
 				Main.dbAdapter.open();
 				Main.dbAdapter.getDatabase().beginTransaction();
@@ -179,9 +179,9 @@ public class DataLoader extends CursorLoader {
 						// Сохранение в БД.
 						if (Main.dbAdapter != null) {
 
-							Log.d(Main.TAG,
-									"DataLoader.loadInBackground(): добавление записи: i =="
-											+ i + ".");
+							// Log.d(Main.TAG,
+							// "DataLoader.loadInBackground(): добавление записи: i == "
+							// + i + ".");
 
 							ContentValues contentValues = new ContentValues();
 							contentValues.put(DatabaseAdapter.VALUE_FIELD_NAME,
@@ -192,22 +192,22 @@ public class DataLoader extends CursorLoader {
 					}
 				}
 
-				Log.d(Main.TAG,
-						"DataLoader.loadInBackground(): завершение транзакции.");
+				// Log.d(Main.TAG,
+				// "DataLoader.loadInBackground(): завершение транзакции.");
 
 				Main.dbAdapter.getDatabase().setTransactionSuccessful();
 				Main.dbAdapter.getDatabase().endTransaction();
 
 			} else {
 
-				Log.d(Main.TAG,
-						"DataLoader.loadInBackground(): Нет адаптера БД: Main.dbAdapter == null!");
+				// Log.d(Main.TAG,
+				// "DataLoader.loadInBackground(): Нет адаптера БД: Main.dbAdapter == null!");
 
 			}
 
 		} catch (Exception e) {
-			Log.d(Main.TAG,
-					"DataLoader.loadInBackground(): ОШИБКА: " + e.toString());
+			// Log.d(Main.TAG, "DataLoader.loadInBackground(): ОШИБКА: " +
+			// e.toString());
 			e.printStackTrace();
 		}
 
@@ -216,13 +216,13 @@ public class DataLoader extends CursorLoader {
 
 			Main.dbAdapter.open();
 
-			Log.d(Main.TAG,
-					"DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ!");
+			// Log.d(Main.TAG,
+			// "DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ!");
 			cursor = Main.dbAdapter
 					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " ASC");
 		} else {
-			Log.d(Main.TAG,
-					"DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ НЕВОЗМОЖНО: dbAdapter == null!");
+			// Log.d(Main.TAG,
+			// "DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ НЕВОЗМОЖНО: dbAdapter == null!");
 		}
 
 		return cursor;
@@ -244,15 +244,16 @@ public class DataLoader extends CursorLoader {
 		// Если загрузчик был сброшен, то игрорируется результат и аннулируются
 		// данные.
 		if (isReset()) {
-			Log.d(Main.TAG,
-					"DataLoader.deliverResult(): загрузчик сброшен: освобождение новых данных и выход.");
+			// Log.d(Main.TAG,
+			// "DataLoader.deliverResult(): загрузчик сброшен: освобождение новых данных и выход.");
 
 			releaseResources(cursorNewData);
+
 			return;
 		}
 
-		Log.d(Main.TAG,
-				"DataLoader.deliverResult(): Установка члену cursorData ссылки на новый курсор.");
+		// Log.d(Main.TAG,
+		// "DataLoader.deliverResult(): Установка члену cursorData ссылки на новый курсор.");
 
 		// Сохранение ссылки на старые данные, чтобы они не были уничтожены
 		// сборщиком мусора. Мы должны защитить эти данные до тех пор, пока не
@@ -269,8 +270,9 @@ public class DataLoader extends CursorLoader {
 		// Должен вызыватся только субклассом. Обязательно должен быть вызван из
 		// основного потока процесса.
 		if (isStarted()) {
-			Log.d(Main.TAG,
-					"DataLoader.deliverResult(): загрузчик запущен: доставка данных.");
+
+			// Log.d(Main.TAG,
+			// "DataLoader.deliverResult(): загрузчик запущен: доставка данных.");
 
 			super.deliverResult(cursorNewData);
 		}
@@ -279,8 +281,9 @@ public class DataLoader extends CursorLoader {
 		// Метод releaseResources(Cursor) пуст, т.к. о фактическом удалении
 		// данных заботится загрузчик.
 		if (oldData != null && oldData != cursorNewData) {
-			Log.d(Main.TAG,
-					"DataLoader.deliverResult(): новые данные отличаются от старых: освобождение старых данных.");
+
+			// Log.d(Main.TAG,
+			// "DataLoader.deliverResult(): новые данные отличаются от старых: освобождение старых данных.");
 
 			releaseResources(oldData);
 		}
@@ -294,7 +297,8 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public void onStopLoading() {
 
-		Log.d(Main.TAG, "DataLoader.onStopLoading(): отмена текущей загрузки.");
+		// Log.d(Main.TAG,
+		// "DataLoader.onStopLoading(): отмена текущей загрузки.");
 
 		// Attempt to cancel the current load task. Must be called on the main
 		// thread of the process.
@@ -330,8 +334,8 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public void onReset() {
 
-		Log.d(Main.TAG,
-				"DataLoader.onReset(): вызов onStopLoading(), освобождение курсора, освобождение наблюдателя.");
+		// Log.d(Main.TAG,
+		// "DataLoader.onReset(): вызов onStopLoading(), освобождение курсора, освобождение наблюдателя.");
 
 		// Гарантируем, что загрузчик был остановлен.
 		onStopLoading();
@@ -340,7 +344,8 @@ public class DataLoader extends CursorLoader {
 		// изменений.
 		if (mObserver != null) {
 
-			Log.d(Main.TAG, "DataLoader.onReset(): ОСВОБОЖДЕНИЕ НАБЛЮДАТЕЛЯ!");
+			// Log.d(Main.TAG,
+			// "DataLoader.onReset(): ОСВОБОЖДЕНИЕ НАБЛЮДАТЕЛЯ!");
 			getContext().unregisterReceiver(mObserver);
 
 			mObserver = null;
@@ -353,7 +358,8 @@ public class DataLoader extends CursorLoader {
 	 */
 	private void releaseResources(Cursor cursor) {
 
-		Log.d(Main.TAG, "DataLoader.releaseResources(): Освобождение курсора!");
+		// Log.d(Main.TAG,
+		// "DataLoader.releaseResources(): Освобождение курсора!");
 
 		// Для простого списка делать ничего не нужно.
 		// Но, например, для курсора нам следует закрыть его здесь.
@@ -361,8 +367,8 @@ public class DataLoader extends CursorLoader {
 		// Освобождаем ресурсы, ассоциированные с данными.
 		if (cursor != null) {
 
-			Log.d(Main.TAG,
-					"DataLoader.releaseResources(): ОСВОБОЖДЕНИЕ КУРСОРА!");
+			// Log.d(Main.TAG,
+			// "DataLoader.releaseResources(): ОСВОБОЖДЕНИЕ КУРСОРА!");
 
 			cursor.close();
 
