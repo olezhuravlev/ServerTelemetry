@@ -918,7 +918,7 @@ public class Main extends FragmentActivity implements
 	 */
 	public static int getThemeID(String themeIDString) {
 
-		int themeID = android.R.style.Theme_Light;
+		int themeID = android.R.style.Theme_Black;
 
 		if (themeIDString.equals("Light")) {
 			themeID = android.R.style.Theme_Light;

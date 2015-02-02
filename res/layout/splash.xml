@@ -17,8 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
             android:text="@string/splashTitle"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textStyle="italic" />
+            android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <ProgressBar
             android:id="@+id/progressBar2"
