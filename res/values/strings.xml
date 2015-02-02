@@ -36,15 +36,18 @@
     <string name="ThemesListSummary">Изменить внешний вид приложения</string>
     <string name="storedRecordsMaxAmountTitle">Сохранять записей</string>
     <string name="storedRecordsMaxAmountSummary">Максимальное количество сохраняемых записей</string>
+    <string name="networkNotAvailable">Отсутствует подключение к сети!</string>
+    <string name="demoData">Демо-данные</string>
+     <string name="splashTitle">Инициализация</string>
 
     <string-array name="ThemesNamesList">
-        <item>Светлая</item>
         <item>Тёмная</item>
+        <item>Светлая</item>
         <item>Прозрачная</item>
     </string-array>
     <string-array name="ThemesIDList_Str">
-        <item>Light</item>
         <item>Black</item>
+        <item>Light</item>
         <item>Translucent</item>
     </string-array>
 

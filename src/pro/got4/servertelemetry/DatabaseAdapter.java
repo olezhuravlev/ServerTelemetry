@@ -1,6 +1,15 @@
 package pro.got4.servertelemetry;
 
+import java.io.InputStream;
 import java.util.Date;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -45,6 +54,10 @@ public class DatabaseAdapter {
 			+ KEY_ROWID_TYPE + ", " + DATE_FIELD_NAME + " " + DATE_FIELD_TYPE
 			+ ", " + VALUE_FIELD_NAME + " " + VALUE_FIELD_TYPE + ");";
 
+	// Форматтер даты для преобразования из входного формата.
+	// private static SimpleDateFormat dateFormatter = new SimpleDateFormat(
+	// "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
 	public DatabaseAdapter(Context context) {
 		mContext = context;
 	}
@@ -57,16 +70,13 @@ public class DatabaseAdapter {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-
-			// Log.d(Main.TAG, "DatabaseHelper.onCreate(SQLiteDatabase db)");
-
 			db.execSQL(DATABASE_CREATE);
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			// TODO: Обновление БД будет реализовано в версии, требующей
-			// изменения её структуры.
+			// Обновление БД будет реализовано в той версии, которая
+			// потребует изменения её структуры.
 		}
 	}
 
@@ -80,9 +90,6 @@ public class DatabaseAdapter {
 	 */
 	public DatabaseAdapter open() throws SQLException {
 
-		// Log.d(Main.TAG,
-		// "DatabaseAdapter.open(): создание экземпляра DatabaseHelper и создание или открытие БД. Не вызывать из UI!");
-
 		mDatabaseHelper = new DatabaseHelper(mContext);
 		mDatabase = mDatabaseHelper.getWritableDatabase();
 
@@ -94,12 +101,7 @@ public class DatabaseAdapter {
 	 */
 	public void close() {
 
-		// Log.d(Main.TAG,
-		// "DatabaseAdapter.close(): Закрытие экземпляра DatabaseHelper, если он существует.");
-
 		if (mDatabaseHelper != null) {
-			// Log.d(Main.TAG,
-			// "DatabaseAdapter.close(): ЗАКРЫТИЕ ЭКЗЕМПЛЯРА DatabaseHelper!!!");
 			mDatabaseHelper.close();
 		}
 	}
@@ -113,7 +115,6 @@ public class DatabaseAdapter {
 	 * @return идентификатор строки или -1
 	 */
 	public long createNote(ContentValues contentValues) {
-
 		return mDatabase.insert(DATABASE_TABLE_NAME, null, contentValues);
 	}
 
@@ -128,13 +129,9 @@ public class DatabaseAdapter {
 
 		if (mDatabase != null) {
 
-			// Log.d(Main.TAG,
-			// "DatabaseAdapter.fetchAllNotes(): СОЗДАНИЕ КУРСОРА!!!");
-
 			cursor = mDatabase.query(DATABASE_TABLE_NAME, new String[] {
 					KEY_ROWID_NAME, DATE_FIELD_NAME, VALUE_FIELD_NAME }, null,
 					null, null, null, orderBy);
-
 		}
 
 		return cursor;
@@ -165,6 +162,10 @@ public class DatabaseAdapter {
 		//
 		// Returns
 		// the number of rows affected
+		if (mDatabase == null) {
+			return 0;
+		}
+
 		int rowsAffected = mDatabase.update(DATABASE_TABLE_NAME, contentValues,
 				DATE_FIELD_NAME + "=" + date.getTime(), null);
 		// Если обновить строку не удалось, значит она еще не существует и её
@@ -207,5 +208,58 @@ public class DatabaseAdapter {
 	 */
 	public void truncateTable(String tableName) {
 		mDatabase.execSQL("DELETE FROM " + tableName);
+	}
+
+	/**
+	 * Заполняет БД демонстрационными данными, полученными из файла ресурсов.
+	 */
+	public static void fillDBWithDemoData(Context context) {
+
+		// "create table temperature (
+		// _id INTEGER PRIMARY KEY AUTOINCREMENT,
+		// date INTEGER not null,
+		// value REAL not null"
+
+		try {
+
+			InputStream is = context.getAssets().open("demo_data.xml");
+
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory
+					.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+
+			Document domDoc = dBuilder.parse(is);
+			domDoc.getDocumentElement().normalize();
+
+			NodeList pointNodes = domDoc.getElementsByTagName("point");
+
+			int rowsTotal = pointNodes.getLength();
+
+			for (int i = 0; i < rowsTotal; i++) {
+
+				Node pointNode = pointNodes.item(i);
+				NamedNodeMap pointAttrs = pointNode.getAttributes();
+				Node dateNode = pointAttrs.getNamedItem("date");
+
+				String date = dateNode.getTextContent();
+				Date gmt = DataLoader.dateFormatter.parse(date);
+
+				String val = pointNode.getTextContent();
+				float temperature = Float.parseFloat(val);
+
+				ContentValues contentValues = new ContentValues();
+				contentValues
+						.put(DatabaseAdapter.VALUE_FIELD_NAME, temperature);
+				int rowsAffected = Main.dbAdapter
+						.updateNote(gmt, contentValues);
+
+				if (rowsAffected == 0)
+					break;
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -23,6 +23,7 @@ public final class R {
     }
     public static final class drawable {
         public static final int network=0x7f020000;
+        public static final int splash_texture=0x7f020001;
     }
     public static final class id {
         public static final int buttGetData=0x7f09000d;
@@ -35,10 +36,11 @@ public final class R {
         public static final int linearLayout1=0x7f090002;
         public static final int pager=0x7f090006;
         public static final int pagerTabStrip=0x7f090007;
+        public static final int progressBar2=0x7f09000f;
         public static final int sourceServerPath=0x7f090009;
         public static final int temperListView=0x7f090001;
         public static final int temperature=0x7f090005;
-        public static final int textView1=0x7f090008;
+        public static final int textViewTitle=0x7f090008;
         public static final int versionNum=0x7f09000e;
     }
     public static final class layout {
@@ -48,6 +50,7 @@ public final class R {
         public static final int main=0x7f030003;
         public static final int no_data=0x7f030004;
         public static final int prefs=0x7f030005;
+        public static final int splash=0x7f030006;
     }
     public static final class string {
         public static final int PreferenceMenuTitle=0x7f050019;
@@ -64,15 +67,18 @@ public final class R {
         public static final int dateButt=0x7f050016;
         public static final int dateEnd=0x7f050007;
         public static final int dateEndDialogTitle=0x7f05000b;
+        public static final int demoData=0x7f05001f;
         public static final int getData=0x7f050001;
         public static final int graph=0x7f050004;
         public static final int graphValuesName1=0x7f050012;
+        public static final int networkNotAvailable=0x7f05001e;
         public static final int noData=0x7f050013;
         public static final int prefs=0x7f050003;
         public static final int rowsInDatabase=0x7f05000e;
         public static final int rowsReceived=0x7f05000d;
         public static final int setDagePeriod=0x7f050017;
         public static final int sourceServerPath=0x7f050002;
+        public static final int splashTitle=0x7f050020;
         public static final int storedRecordsMaxAmountSummary=0x7f05001d;
         public static final int storedRecordsMaxAmountTitle=0x7f05001c;
         public static final int table=0x7f050005;

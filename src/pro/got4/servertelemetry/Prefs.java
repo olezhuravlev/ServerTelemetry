@@ -7,13 +7,17 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GestureDetectorCompat;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -109,6 +113,8 @@ public class Prefs extends Fragment implements
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 
+				v.performClick();
+
 				sourceServerPath.setFocusable(true);
 				sourceServerPath.setFocusableInTouchMode(true);
 
@@ -154,6 +160,20 @@ public class Prefs extends Fragment implements
 		case R.id.buttGetData: {
 
 			Main main = (Main) getActivity();
+
+			if (!Main.isNetworkAvailable(main)) {
+
+				SpannableString coloredText = new SpannableString(
+						getString(R.string.networkNotAvailable));
+				coloredText.setSpan(
+						new ForegroundColorSpan(Color.rgb(50, 167, 217)), 11,
+						23, Spanned.SPAN_COMPOSING);
+
+				Toast.makeText(main, coloredText, Toast.LENGTH_LONG).show();
+
+				return;
+			}
+
 			Bundle args = new Bundle();
 
 			SimpleDateFormat simpleDateFormat = DatePickerFragment

@@ -34,7 +34,7 @@ public class DataLoader extends CursorLoader {
 	private DataObserver mObserver;
 
 	@SuppressLint("SimpleDateFormat")
-	private SimpleDateFormat dateFormatter = new SimpleDateFormat(
+	public static SimpleDateFormat dateFormatter = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm:ss");
 
 	public DataLoader(Context context) {
@@ -59,9 +59,6 @@ public class DataLoader extends CursorLoader {
 	// состояния.
 	@Override
 	public void onStartLoading() {
-
-		// Log.d(Main.TAG,
-		// "DataLoader.onStartLoading(): если курсор существует, то его доставка. Создание экземпляра наблюдателя. Принудительный вызов загрузки, если обнаружено изменение контента.");
 
 		// Если данные от предыдущей загрузки существуют, то их стоит доставить
 		// немедленно.
@@ -105,9 +102,6 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public Cursor loadInBackground() {
 
-		// Log.d(Main.TAG,
-		// "DataLoader.loadInBackground(): получение XML-данных, создание/открытие БД, загрузка данных в транзакции, создание и возвращение курсора на все записи.");
-
 		// Выполнение асинхронной загрузки. Метод вызывается в фоновом потоке и
 		// должен генерировать новый набор данных, которые д.б. возвращены
 		// клиенту. Здесь следует выполнять запрос и добавлять результат в
@@ -128,14 +122,7 @@ public class DataLoader extends CursorLoader {
 			NodeList pointNodes = doc.getElementsByTagName(POINT_ITEM_NAME);
 			length = pointNodes.getLength();
 
-			// Log.d(Main.TAG,
-			// "DataLoader.loadInBackground(): получено записей: " + length +
-			// ".");
-
 			if (Main.dbAdapter != null) {
-
-				// Log.d(Main.TAG,
-				// "DataLoader.loadInBackground(): создание/открытие БД, начало транзакции.");
 
 				Main.dbAdapter.open();
 				Main.dbAdapter.getDatabase().beginTransaction();
@@ -192,22 +179,11 @@ public class DataLoader extends CursorLoader {
 					}
 				}
 
-				// Log.d(Main.TAG,
-				// "DataLoader.loadInBackground(): завершение транзакции.");
-
 				Main.dbAdapter.getDatabase().setTransactionSuccessful();
 				Main.dbAdapter.getDatabase().endTransaction();
-
-			} else {
-
-				// Log.d(Main.TAG,
-				// "DataLoader.loadInBackground(): Нет адаптера БД: Main.dbAdapter == null!");
-
 			}
 
 		} catch (Exception e) {
-			// Log.d(Main.TAG, "DataLoader.loadInBackground(): ОШИБКА: " +
-			// e.toString());
 			e.printStackTrace();
 		}
 
@@ -215,14 +191,8 @@ public class DataLoader extends CursorLoader {
 		if (Main.dbAdapter != null) {
 
 			Main.dbAdapter.open();
-
-			// Log.d(Main.TAG,
-			// "DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ!");
 			cursor = Main.dbAdapter
 					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " ASC");
-		} else {
-			// Log.d(Main.TAG,
-			// "DataLoader.loadInBackground(): СОЗДАНИЕ КУРСОРА НА ВСЕ ЗАПИСИ НЕВОЗМОЖНО: dbAdapter == null!");
 		}
 
 		return cursor;
@@ -244,16 +214,11 @@ public class DataLoader extends CursorLoader {
 		// Если загрузчик был сброшен, то игрорируется результат и аннулируются
 		// данные.
 		if (isReset()) {
-			// Log.d(Main.TAG,
-			// "DataLoader.deliverResult(): загрузчик сброшен: освобождение новых данных и выход.");
 
 			releaseResources(cursorNewData);
 
 			return;
 		}
-
-		// Log.d(Main.TAG,
-		// "DataLoader.deliverResult(): Установка члену cursorData ссылки на новый курсор.");
 
 		// Сохранение ссылки на старые данные, чтобы они не были уничтожены
 		// сборщиком мусора. Мы должны защитить эти данные до тех пор, пока не
@@ -270,10 +235,6 @@ public class DataLoader extends CursorLoader {
 		// Должен вызыватся только субклассом. Обязательно должен быть вызван из
 		// основного потока процесса.
 		if (isStarted()) {
-
-			// Log.d(Main.TAG,
-			// "DataLoader.deliverResult(): загрузчик запущен: доставка данных.");
-
 			super.deliverResult(cursorNewData);
 		}
 
@@ -281,10 +242,6 @@ public class DataLoader extends CursorLoader {
 		// Метод releaseResources(Cursor) пуст, т.к. о фактическом удалении
 		// данных заботится загрузчик.
 		if (oldData != null && oldData != cursorNewData) {
-
-			// Log.d(Main.TAG,
-			// "DataLoader.deliverResult(): новые данные отличаются от старых: освобождение старых данных.");
-
 			releaseResources(oldData);
 		}
 
@@ -296,9 +253,6 @@ public class DataLoader extends CursorLoader {
 	// Событие всегда вызывается из главного потока процесса.
 	@Override
 	public void onStopLoading() {
-
-		// Log.d(Main.TAG,
-		// "DataLoader.onStopLoading(): отмена текущей загрузки.");
 
 		// Attempt to cancel the current load task. Must be called on the main
 		// thread of the process.
@@ -334,18 +288,12 @@ public class DataLoader extends CursorLoader {
 	@Override
 	public void onReset() {
 
-		// Log.d(Main.TAG,
-		// "DataLoader.onReset(): вызов onStopLoading(), освобождение курсора, освобождение наблюдателя.");
-
 		// Гарантируем, что загрузчик был остановлен.
-		onStopLoading();
+		stopLoading();
 
 		// Загрузчик сбрасывается, поэтому нам следует остановить отслеживание
 		// изменений.
 		if (mObserver != null) {
-
-			// Log.d(Main.TAG,
-			// "DataLoader.onReset(): ОСВОБОЖДЕНИЕ НАБЛЮДАТЕЛЯ!");
 			getContext().unregisterReceiver(mObserver);
 
 			mObserver = null;
@@ -358,20 +306,12 @@ public class DataLoader extends CursorLoader {
 	 */
 	private void releaseResources(Cursor cursor) {
 
-		// Log.d(Main.TAG,
-		// "DataLoader.releaseResources(): Освобождение курсора!");
-
 		// Для простого списка делать ничего не нужно.
 		// Но, например, для курсора нам следует закрыть его здесь.
 		// Все ресурсы, ассоциированные с загрузчиком д.б. освобождены здесь.
 		// Освобождаем ресурсы, ассоциированные с данными.
 		if (cursor != null) {
-
-			// Log.d(Main.TAG,
-			// "DataLoader.releaseResources(): ОСВОБОЖДЕНИЕ КУРСОРА!");
-
 			cursor.close();
-
 			cursor = null;
 		}
 	}

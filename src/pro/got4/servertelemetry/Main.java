@@ -16,6 +16,8 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -36,8 +38,6 @@ import android.widget.Toast;
 
 public class Main extends FragmentActivity implements
 		LoaderManager.LoaderCallbacks<Cursor> {
-
-	// public static final String TAG = "myLogs";
 
 	/**
 	 * Идентификаторы страниц, отображаемых вьюпейджером.
@@ -68,7 +68,7 @@ public class Main extends FragmentActivity implements
 	public static final String CURRENT_THEME_ID_FIELDNAME = "currentTheme_id";
 	public static final String BUNDLE_FIELDNAME = "bundle";
 	public static final String RESTART_FLAG_FIELDNAME = "restart_flag";
-
+	public static final String FIRST_START_FIELDNAME = "first_start";
 	/**
 	 * Строковой идентификатор текущей используемой темы оформления.
 	 */
@@ -151,15 +151,6 @@ public class Main extends FragmentActivity implements
 
 	// Это тот Bundle, который сохранен в onSaveInstanceState.
 	public void onCreate(Bundle savedInstanceState) {
-
-		// if (savedInstanceState != null) {
-		// Log.d(Main.TAG,
-		// "Main.onCreate(): восстановление сохраненных значений, установка темы, установка вью, назначение адаптера для вьюпейджера. savedInstanceState = "
-		// + savedInstanceState.toString());
-		// } else {
-		// Log.d(Main.TAG,
-		// "Main.onCreate(): восстановление сохраненных значений, установка темы, установка вью, назначение адаптера для вьюпейджера. savedInstanceState = null");
-		// }
 
 		super.onCreate(savedInstanceState);
 
@@ -271,35 +262,21 @@ public class Main extends FragmentActivity implements
 	@Override
 	public void onStart() {
 
-		// Log.d(Main.TAG, "Main.onStart(): Инициализация менеджера загрузок.");
-
 		super.onStart();
 
 		// Инициализация загрузчика.
 		getSupportLoaderManager().initLoader(LOADER_ID, null, this);
-
 	}
 
 	@Override
 	public void onRestoreInstanceState(Bundle savedInstanceState) {
-
-		// Log.d(Main.TAG,
-		// "Main.onRestoreInstanceState(): savedInstanceState = " +
-		// savedInstanceState.toString());
-
 		super.onRestoreInstanceState(savedInstanceState);
 	}
 
 	@Override
 	public void onResume() {
 
-		// Log.d(Main.TAG,
-		// "Main.onResume(): перезапуск, если изменилась тема, создание адаптера БД DatabaseAdapter и его открытие.");
-
 		super.onResume();
-
-		// if (true)
-		// return;
 
 		SharedPreferences sp = PreferenceManager
 				.getDefaultSharedPreferences(this);
@@ -361,8 +338,10 @@ public class Main extends FragmentActivity implements
 		// Адаптер нужно инициализировать первым, т.к. он используется в
 		// процедуре onLoadFinished, запускаемой после вызова
 		// Main.loaderManager.initLoader.
-		Main.dbAdapter = new DatabaseAdapter(this);
-		Main.dbAdapter.open(); // TODO: Не вызывать из UI!
+		if (Main.dbAdapter == null) {
+			Main.dbAdapter = new DatabaseAdapter(this);
+			Main.dbAdapter.open(); // TODO: Не рекомендуется вызывать из UI!
+		}
 	}
 
 	// Вызывается, чтобы получить состояние экземпляра из активности перед
@@ -412,8 +391,6 @@ public class Main extends FragmentActivity implements
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 
-		// Log.d(Main.TAG, "Main.onSaveInstanceState(): сохранение настроек.");
-
 		// Если не вызывать, то не сохраняется:
 		// - текущая страница ViewPager;
 		// - текущая строка списка.
@@ -429,9 +406,6 @@ public class Main extends FragmentActivity implements
 	@Override
 	public void onPause() {
 
-		// Log.d(Main.TAG,
-		// "Main.onPause(): сохранение настроек, закрытие адаптера БД.");
-
 		super.onPause();
 
 		// Сохранение данных следует делать здесь, а не в onDestroy(), поскольку
@@ -439,8 +413,6 @@ public class Main extends FragmentActivity implements
 		// onPause() будет вызван в любом случае, т.к. только после него система
 		// получает возможность убить процесс.
 		savePreferences();
-
-		// Log.d(Main.TAG, "Main.onPause(): ЗАКРЫТИЕ АДАПТЕРА БД!!!");
 
 		if (dbAdapter != null) {
 			dbAdapter.close();
@@ -493,7 +465,6 @@ public class Main extends FragmentActivity implements
 			}
 
 			return pageFragment;
-
 		}
 
 		/**
@@ -604,9 +575,6 @@ public class Main extends FragmentActivity implements
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
 
-		// Log.d(Main.TAG,
-		// "Main.onCreateLoader(): Создание экземпляра асинхронного загрузчика DataLoader.");
-
 		// Метод-фабрика, просто возвращающий экземпляр нового загрузчика.
 		// Метод вызывается LoaderManager-ом при первом создании загрузчика.
 		DataLoader dataLoader = new DataLoader(this);
@@ -691,9 +659,6 @@ public class Main extends FragmentActivity implements
 	public void onLoadFinished(Loader<Cursor> loader,
 			Cursor cursorOfReceivedData) {
 
-		// Log.d(Main.TAG,
-		// "Main.onLoadFinished(): установка ссылок на курсоры, настройка, заполнение и установка вью графика, уведомление FragmentPagerAdapter.");
-
 		if (Main.dbAdapter != null && cursorOfReceivedData == null) {
 			cursorOfReceivedData = Main.dbAdapter
 					.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME + " ASC");
@@ -705,12 +670,12 @@ public class Main extends FragmentActivity implements
 			;
 		}
 
-		// if (Main.cursorCurrentData != cursorOfReceivedData) {
 		Main.cursorCurrentData = cursorOfReceivedData;
 
 		// Уведомление адаптера вьюпейджера, что состав данных изменился.
 		// Нужно вызывать до создания графика, чтобы он отрисовался!
-		// TODO: При смене ориентации экрана этот метод вызывается, но
+
+		// При смене ориентации экрана этот метод вызывается, но
 		// почему-то это не приводит к последующему вызову getItemPosition!
 
 		// Этот метод д.б. вызван приложением если данные, отображаемые
@@ -718,27 +683,15 @@ public class Main extends FragmentActivity implements
 		// После вызова этого метода будет вызвана getItemPosition(Object
 		// object).
 		adapter.notifyDataSetChanged();
-		// }
 
 		// Если курсор получен, то можно получить и курсор для обратного обхода.
 		if (Main.cursorCurrentData != null) {
-
-			// Log.d(Main.TAG,
-			// "Main.onLoadFinished(): СОЗДАНИЕ ОБРАТНОГО КУРСОРА НА ВСЕ ЗАПИСИ!");
-
 			if (Main.dbAdapter != null) {
 				Main.cursorCurrentDataBackward = Main.dbAdapter
 						.fetchAllNotes(DatabaseAdapter.DATE_FIELD_NAME
 								+ " DESC");
 			}
-
-			// startManagingCursor(Main.cursorCurrentData);
-			// startManagingCursor(Main.cursorCurrentDataBackward);
 		}
-
-		// // Настройка графика.
-		// String[] series = new String[] { getResources().getString(
-		// R.string.graphValuesName1) };
 
 		Date[] x_values = new Date[rowsInDatabase];
 		double[] y_values = new double[rowsInDatabase];
@@ -781,10 +734,6 @@ public class Main extends FragmentActivity implements
 			Main.graph_axis_y = new ArrayList<double[]>();
 			Main.graph_axis_y.add(y_values);
 
-			// Main.lineGraph.adjust(this, series, graph_axis_x, graph_axis_y);
-			// Main.lineGraph.renderer.setApplyBackgroundColor(true);
-			// Main.lineGraph.renderer.setMarginsColor(Color.TRANSPARENT);
-
 			// Уведомление открытых страниц (фрагментов) об обновлении (закрытые
 			// фрагменты сами обновятся при их создании в onCreateView()).
 			// После вызова этого метода сработает событие
@@ -821,28 +770,6 @@ public class Main extends FragmentActivity implements
 			Main.updateGraph = true;
 			Main.updateTable = true;
 
-			// // Очистка всех существующих вью и добавление только что
-			// полученного
-			// // вью графика в иерархию.
-			// if (Main.graphFragmentView != null) {
-			//
-			// Log.d(Main.TAG,
-			// "Main.onLoadFinished(): Добавление графика во ФРАГМЕНТ!");
-			//
-			// // Получение вью графика.
-			// GraphicalView graphicalView = ChartFactory.getTimeChartView(
-			// lineGraph.context, lineGraph.dataset,
-			// lineGraph.renderer, "HH:mm");
-			//
-			// LinearLayout linearLayout = (LinearLayout) graphFragmentView
-			// .findViewById(R.id.graph);
-			// linearLayout.removeAllViews();
-			// linearLayout.addView(graphicalView, new LayoutParams(
-			// LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-			// } else {
-			// Log.d(Main.TAG, "Main.onLoadFinished(): НЕТ ФРАГМЕНТА ГРАФИКА!");
-			// }
-
 			Main.setGraph(this);
 
 			// Сообщение пользователю.
@@ -874,8 +801,6 @@ public class Main extends FragmentActivity implements
 		Main.lineGraph.adjust(context, series, Main.graph_axis_x,
 				Main.graph_axis_y);
 
-		// Log.d(Main.TAG, "Main.setGraph(): Добавление графика во ФРАГМЕНТ!");
-
 		// Получение вью графика. Должно вызываться после adjust(), чтобы
 		// сформировался Main.lineGraph.renderer.
 		GraphicalView graphicalView = ChartFactory.getTimeChartView(
@@ -905,9 +830,6 @@ public class Main extends FragmentActivity implements
 	// Наличие метода требуется интерфейсом LoaderManager.LoaderCallbacks.
 	@Override
 	public void onLoaderReset(Loader<Cursor> loader) {
-
-		// Log.d(Main.TAG, "Main.onLoaderReset()");
-
 		// Вызывается, когда предварительно созданный загрузчик сбрасывается и
 		// поэтому его данные становятся недоступны. Приложение в этой точке
 		// должно удалить любые имеющиеся ссылки на данные загрузчика.
@@ -994,7 +916,7 @@ public class Main extends FragmentActivity implements
 	 * @param themeIDString
 	 * @return
 	 */
-	private int getThemeID(String themeIDString) {
+	public static int getThemeID(String themeIDString) {
 
 		int themeID = android.R.style.Theme_Light;
 
@@ -1007,5 +929,24 @@ public class Main extends FragmentActivity implements
 		}
 
 		return themeID;
+	}
+
+	/**
+	 * Проверка наличия подключения к сети.
+	 * 
+	 * @return
+	 */
+	public static boolean isNetworkAvailable(Context context) {
+
+		ConnectivityManager connectivityManager = (ConnectivityManager) context
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetworkInfo = connectivityManager
+				.getActiveNetworkInfo();
+
+		if (activeNetworkInfo == null) {
+			return false;
+		} else {
+			return activeNetworkInfo.isConnected();
+		}
 	}
 }

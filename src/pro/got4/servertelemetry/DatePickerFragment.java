@@ -16,8 +16,9 @@ import android.widget.EditText;
 
 /**
  * Диалог для ввода даты.
+ * 
  * @author programmer
- *
+ * 
  */
 public class DatePickerFragment extends DialogFragment {
 
