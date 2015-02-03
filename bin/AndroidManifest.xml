@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="pro.got4.servertelemetry"
-    android:versionCode="10051"
+    android:versionCode="10060"
     android:versionName="@string/versionName" >
 
     <uses-sdk

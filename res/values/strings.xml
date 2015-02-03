@@ -1,5 +1,7 @@
 <resources>
 
+    <string name="versionName">ver.1.0060</string>
+
     <string name="app_name">ServerTelemetry</string>
     <string name="getData">Получить данные</string>
     <string name="sourceServerPath">Путь к серверу телеметрии</string>
@@ -12,7 +14,6 @@
     <string name="cancel">Отмена</string>
     <string name="dateBeginDialogTitle">Начало периода</string>
     <string name="dateEndDialogTitle">Конец периода</string>
-    <string name="versionName">ver.1.0051</string>
     <string name="rowsReceived">Получено строк:</string>
     <string name="rowsInDatabase">Записей в БД:</string>
     <string name="titleY">Температура, С</string>
