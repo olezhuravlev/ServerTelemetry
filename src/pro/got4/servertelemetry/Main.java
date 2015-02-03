@@ -152,8 +152,6 @@ public class Main extends FragmentActivity implements
 	// Это тот Bundle, который сохранен в onSaveInstanceState.
 	public void onCreate(Bundle savedInstanceState) {
 
-		super.onCreate(savedInstanceState);
-
 		// Получение данных, сохраненных при предыдущем запуске приложения.
 		// Возможны следующие ситуации восстановления данных:
 		// а) первый запуск приложения;
@@ -243,9 +241,11 @@ public class Main extends FragmentActivity implements
 			currentTheme = themeInPrefs;
 		}
 
-		// Установка темы.
+		// Установка темы. Следует делать ДО вызова метода суперкласса!
 		setTheme(getThemeID(currentTheme));
-
+		
+		super.onCreate(savedInstanceState);
+		
 		// Установка вью.
 		setContentView(R.layout.main);
 
